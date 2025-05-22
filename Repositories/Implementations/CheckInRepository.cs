@@ -145,6 +145,37 @@ namespace OdontoPrevAPI.Repositories.Implementations
             }
             else
             {
+                // Busca as perguntas e respostas associadas
+                foreach (var checkIn in getCheckIn)
+                {
+                    checkIn.Perguntas = await _context.Perguntas.FirstOrDefaultAsync(x => x.IdPergunta == checkIn.IdPergunta);
+                    checkIn.Respostas = await _context.Respostas.FirstOrDefaultAsync(x => x.IdResposta == checkIn.IdResposta);
+                }
+
+                return getCheckIn;
+            }
+        }
+
+        // Gets the check in with limit on number of the last check-ins
+        public async Task<List<Models.CheckIn>> GetByIdPacienteLastCheckins(int idPaciente, int nrCheckins)
+        {
+            var getCheckIn = await _context.CheckIn
+                .Where(x => x.IdPaciente == idPaciente)
+                .OrderByDescending(x => x.DtCheckIn)                
+                .ToListAsync();
+            if (getCheckIn == null || !getCheckIn.Any())
+            {
+                throw new Exception("Nenhum Check-In encontrado para este paciente.");
+            }
+            else
+            {
+                // Busca as perguntas e respostas associadas
+                foreach (var checkIn in getCheckIn)
+                {
+                    checkIn.Perguntas = await _context.Perguntas.FirstOrDefaultAsync(x => x.IdPergunta == checkIn.IdPergunta);
+                    checkIn.Respostas = await _context.Respostas.FirstOrDefaultAsync(x => x.IdResposta == checkIn.IdResposta);
+                }
+
                 return getCheckIn;
             }
         }
@@ -165,6 +196,6 @@ namespace OdontoPrevAPI.Repositories.Implementations
                 await _context.SaveChangesAsync();
                 return getCheckIn;
             }
-        }
+        }        
     }
 }

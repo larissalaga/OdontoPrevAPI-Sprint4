@@ -1,12 +1,13 @@
-using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
+using Microsoft.EntityFrameworkCore;
+using OdontoPrevAPI.Configuration;
 using OdontoPrevAPI.Data;
 using OdontoPrevAPI.Mappings;
+using OdontoPrevAPI.MlModels;
 using OdontoPrevAPI.Repositories.Implementations;
 using OdontoPrevAPI.Repositories.Interfaces;
-using OdontoPrevAPI.Configuration;
-using Microsoft.AspNetCore.Authentication;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -42,6 +43,13 @@ builder.Services.AddScoped<IPerguntasRepository, PerguntasRepository>();
 builder.Services.AddScoped<IRespostasRepository, RespostasRepository>();
 builder.Services.AddScoped<IPacienteDentistaRepository, PacienteDentistaRepository>();
 
+// Initialize ML service when the application starts
+// Register Generative AI service
+builder.Services.AddSingleton<GenerativeAIService>();
+builder.Services.AddScoped<MlService>();
+builder.Services.AddHostedService<MlInitializationService>();
+
+
 builder.Services.AddDataProtection();
 builder.Services.AddSingleton(ConfigManager.Instance);
 
@@ -71,6 +79,7 @@ builder.Services.AddAuthentication(options =>
     };
 });
 // --- End Google Authentication configuration ---
+
 
 var app = builder.Build();
 
