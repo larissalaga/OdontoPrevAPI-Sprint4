@@ -37,10 +37,10 @@ namespace OdontoPrevAPI.Controllers
         /// <summary>
         /// Treina o modelo ML com dados de check-in existentes na janela de 5 dias
         /// </summary>
-        [HttpPost("train")]
+        [HttpPost("ml-train/paciente")]
         [SwaggerOperation(
-            Summary = "Treinar modelos ML",
-            Description = "Treina os modelos de machine learning com análise contextual de 5 dias por paciente")]
+            Summary = "Treinar modelos ML (não generativa)",
+            Description = "Treina os modelos de machine learning (não generativa) com análise contextual de 5 dias por paciente")]
         [SwaggerResponse(200, "Modelos treinados com sucesso")]
         [SwaggerResponse(500, "Erro ao treinar modelos")]
         public async Task<IActionResult> TrainModel()
@@ -63,9 +63,9 @@ namespace OdontoPrevAPI.Controllers
         /// <summary>
         /// Obtém uma recomendação personalizada para um paciente com base em seu histórico de 5 dias
         /// </summary>
-        [HttpGet("recommendation/paciente/{id}")]
+        [HttpGet("ml-recommendation/paciente/id/{id}")]
         [SwaggerOperation(
-            Summary = "Obter recomendação para paciente",
+            Summary = "Obter recomendação para paciente, via ML (não generativa)",
             Description = "Analisa o histórico de 5 dias de check-ins do paciente e retorna uma recomendação personalizada")]
         [SwaggerResponse(200, "Recomendação gerada com sucesso")]
         [SwaggerResponse(404, "Paciente não encontrado")]
@@ -89,16 +89,18 @@ namespace OdontoPrevAPI.Controllers
                     paciente = new
                     {
                         id = paciente.IdPaciente,
-                        nome = paciente.NmPaciente
+                        nome = paciente.NmPaciente,
+                        cpf = paciente.NrCpf
                     },
-                    periodoAnalise = $"Últimos {prediction.TotalCheckInsAnalyzed} check-ins (até 5 dias)",
-                    dataUltimoCheckIn = prediction.CheckInDate,
                     recomendacao = prediction.Recommendation,
                     potencialProblema = prediction.PotentialIssue,
+                    periodoAnalise = $"Últimos {prediction.TotalCheckInsAnalyzed} check-ins (até 5 dias)",
+                    dataUltimoCheckIn = prediction.CheckInDate,
                     confianca = prediction.Confidence,
                     checkInsAnalisados = prediction.TotalCheckInsAnalyzed,
                     analiseContexual = true
                 });
+
             }
             catch (Exception ex)
             {
@@ -107,16 +109,61 @@ namespace OdontoPrevAPI.Controllers
         }
 
         /// <summary>
-        /// Obtém um relatório detalhado da saúde bucal de um paciente baseado nos últimos 5 dias
+        /// Obtém previsões de saúde bucal para um paciente específico baseadas em contexto de 5 dias
         /// </summary>
-        [HttpGet("paciente/{id}/relatorio")]
+        [HttpGet("ml-recommendation/paciente/cpf/{cpf}")]
         [SwaggerOperation(
-            Summary = "Obter relatório de saúde bucal",
-            Description = "Obtém um relatório detalhado da saúde bucal do paciente com base em seus check-ins dos últimos 5 dias")]
-        [SwaggerResponse(200, "Relatório gerado com sucesso")]
+            Summary = "Obter previsões para paciente por CPF, via ML (não generativa)",
+            Description = "Analisa os check-ins dos últimos 5 dias de um paciente e retorna previsões contextuais")]
+        [SwaggerResponse(200, "Previsões geradas com sucesso")]
         [SwaggerResponse(404, "Paciente não encontrado")]
-        [SwaggerResponse(500, "Erro ao gerar relatório")]
-        public async Task<IActionResult> GetPatientDentalReport(int id)
+        [SwaggerResponse(500, "Erro ao gerar previsões")]
+        public async Task<IActionResult> GetRecommendationForPatientByCPF(string cpf)
+        {
+            try
+            {
+                var paciente = await _pacienteRepository.GetByNrCpf(cpf);
+                if (paciente == null)
+                {
+                    return NotFound($"Paciente com CPF {cpf} não encontrado");
+                }
+
+                // Obter previsão e recomendação para o paciente com base nos últimos 5 dias
+                var prediction = await _mlService.PredictRecommendationForPatient(paciente.IdPaciente);
+
+                return Ok(new
+                {
+                    paciente = new
+                    {
+                        id = paciente.IdPaciente,
+                        nome = paciente.NmPaciente,
+                        cpf = paciente.NrCpf
+                    },
+                    recomendacao = prediction.Recommendation,
+                    potencialProblema = prediction.PotentialIssue,
+                    periodoAnalise = $"Últimos {prediction.TotalCheckInsAnalyzed} check-ins (até 5 dias)",
+                    dataUltimoCheckIn = prediction.CheckInDate,
+                    confianca = prediction.Confidence,
+                    checkInsAnalisados = prediction.TotalCheckInsAnalyzed,
+                    analiseContexual = true
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Erro ao gerar previsões: {ex.Message}");
+            }
+        }
+        /// <summary>
+        /// Obtém uma recomendação personalizada usando IA generativa para um paciente
+        /// </summary>
+        [HttpGet("ai-recommendation/paciente/id/{id}")]
+        [SwaggerOperation(
+            Summary = "Obter recomendação de IA para paciente",
+            Description = "Usa IA generativa para analisar o histórico de 5 dias de check-ins do paciente")]
+        [SwaggerResponse(200, "Recomendação gerada com sucesso pela IA")]
+        [SwaggerResponse(404, "Paciente não encontrado")]
+        [SwaggerResponse(500, "Erro ao gerar recomendação")]
+        public async Task<IActionResult> GetAIRecommendationForPatient(int id)
         {
             try
             {
@@ -127,8 +174,8 @@ namespace OdontoPrevAPI.Controllers
                     return NotFound($"Paciente com ID {id} não encontrado");
                 }
 
-                // Obter relatório detalhado dos últimos 5 dias
-                var summary = await _mlService.GetPatientDentalSummary(id);
+                // Obter recomendação gerada por IA para o paciente
+                var prediction = await _mlService.GenerateAIRecommendationForPatient(id);
 
                 return Ok(new
                 {
@@ -137,121 +184,174 @@ namespace OdontoPrevAPI.Controllers
                         id = paciente.IdPaciente,
                         nome = paciente.NmPaciente
                     },
-                    resumo = new
-                    {
-                        totalCheckIns = summary.TotalCheckIns,
-                        problemasIdentificados = summary.ProblemasIdentificados,
-                        confiancaMedia = summary.ConfiancaMedia,
-                        periodoAnalise = "Últimos 5 dias",
-                        recomendacaoPrincipal = summary.RecomendacaoPrincipal
-                    },
-                    detalhes = summary.DetalhesAnalise
+                    periodoAnalise = $"Últimos {prediction.TotalCheckInsAnalyzed} check-ins (até 5 dias)",
+                    dataUltimoCheckIn = prediction.CheckInDate,
+                    recomendacao = prediction.Recommendation,
+                    potencialProblema = prediction.PotentialIssue,
+                    fonteDaRecomendacao = "Inteligência Artificial Generativa",
+                    checkInsAnalisados = prediction.TotalCheckInsAnalyzed
                 });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Erro ao gerar relatório: {ex.Message}");
+                return StatusCode(500, $"Erro ao gerar recomendação por IA: {ex.Message}");
             }
         }
 
         /// <summary>
-        /// Obtém previsões de saúde bucal para um paciente específico baseadas em contexto de 5 dias
+        /// Obtém uma recomendação personalizada usando IA generativa para um paciente
         /// </summary>
-        [HttpGet("predict/{cpf}")]
+        [HttpGet("ai-recommendation/paciente/cpf/{cpf}")]
         [SwaggerOperation(
-            Summary = "Obter previsões para paciente por CPF",
-            Description = "Analisa os check-ins dos últimos 5 dias de um paciente e retorna previsões contextuais")]
-        [SwaggerResponse(200, "Previsões geradas com sucesso")]
+            Summary = "Obter recomendação de IA para paciente",
+            Description = "Usa IA generativa para analisar o histórico de 5 dias de check-ins do paciente")]
+        [SwaggerResponse(200, "Recomendação gerada com sucesso pela IA")]
         [SwaggerResponse(404, "Paciente não encontrado")]
-        [SwaggerResponse(500, "Erro ao gerar previsões")]
-        public async Task<IActionResult> GetPredictions(string cpf)
+        [SwaggerResponse(500, "Erro ao gerar recomendação")]
+        public async Task<IActionResult> GetAIRecommendationForPatientByCPF(string cpf)
         {
             try
             {
+                // Verificar se o paciente existe
                 var paciente = await _pacienteRepository.GetByNrCpf(cpf);
                 if (paciente == null)
                 {
                     return NotFound($"Paciente com CPF {cpf} não encontrado");
                 }
 
-                var results = await _mlService.AnalyzePatientCheckIns(paciente.IdPaciente);
-
-                if (results.Count == 0)
-                {
-                    return Ok(new
-                    {
-                        paciente = new
-                        {
-                            id = paciente.IdPaciente,
-                            nome = paciente.NmPaciente,
-                            cpf = paciente.NrCpf
-                        },
-                        mensagem = "Não foram encontrados check-ins recentes para este paciente."
-                    });
-                }
-
-                // Primeiro resultado é a análise contextual consolidada
-                var contextualAnalysis = results.First();
-
-                // Os demais são os check-ins individuais
-                var individualCheckIns = results.Skip(1).ToList();
-
-                // Agrupar os check-ins individuais por data para melhor visualização
-                var groupedCheckIns = individualCheckIns
-                    .GroupBy(r => r.CheckInDate.Date)
-                    .Select(g => new {
-                        data = g.Key.ToString("dd/MM/yyyy"),
-                        checkIns = g.Select(r => new {
-                            pergunta = r.Question,
-                            resposta = r.Answer
-                        }).ToList()
-                    })
-                    .ToList();
-
-                // Resumo dos problemas potenciais
-                var problemSummary = results
-                    .Where(r => r.PotentialIssue)
-                    .GroupBy(r => r.Recommendation)
-                    .Select(g => new {
-                        recomendacao = g.Key,
-                        ocorrencias = g.Count(),
-                        confiancaMedia = g.Average(r => r.Confidence)
-                    })
-                    .OrderByDescending(x => x.ocorrencias)
-                    .ToList();
+                // Obter recomendação gerada por IA para o paciente
+                var prediction = await _mlService.GenerateAIRecommendationForPatient(paciente.IdPaciente);
 
                 return Ok(new
                 {
                     paciente = new
                     {
                         id = paciente.IdPaciente,
-                        nome = paciente.NmPaciente,
-                        cpf = paciente.NrCpf
+                        nome = paciente.NmPaciente
                     },
-                    analiseContextual = new
-                    {
-                        periodoAnalisado = "Últimos 5 dias",
-                        totalCheckIns = individualCheckIns.Count,
-                        potencialProblema = contextualAnalysis.PotentialIssue,
-                        confianca = contextualAnalysis.Confidence,
-                        recomendacao = contextualAnalysis.Recommendation
-                    },
-                    estatisticas = new
-                    {
-                        totalCheckIns = individualCheckIns.Count,
-                        problemasDetectados = individualCheckIns.Count(r => r.PotentialIssue),
-                        porcentagemProblemas = individualCheckIns.Count > 0
-                            ? Math.Round(100.0 * individualCheckIns.Count(r => r.PotentialIssue) / individualCheckIns.Count, 1)
-                            : 0
-                    },
-                    resumoProblemas = problemSummary,
-                    checkInsPorData = groupedCheckIns
+                    periodoAnalise = $"Últimos {prediction.TotalCheckInsAnalyzed} check-ins (até 5 dias)",
+                    dataUltimoCheckIn = prediction.CheckInDate,
+                    recomendacao = prediction.Recommendation,
+                    potencialProblema = prediction.PotentialIssue,
+                    fonteDaRecomendacao = "Inteligência Artificial Generativa",
+                    checkInsAnalisados = prediction.TotalCheckInsAnalyzed
                 });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Erro ao gerar previsões: {ex.Message}");
+                return StatusCode(500, $"Erro ao gerar recomendação por IA: {ex.Message}");
             }
         }
+
+        /// <summary>
+        /// Compara recomendações de ML e IA generativa para um paciente
+        /// </summary>
+        [HttpGet("compare-recommendations/paciente/id/{id}")]
+        [SwaggerOperation(
+            Summary = "Comparar recomendações ML vs IA",
+            Description = "Compara recomendações geradas por Machine Learning e IA Generativa")]
+        [SwaggerResponse(200, "Comparação gerada com sucesso")]
+        [SwaggerResponse(404, "Paciente não encontrado")]
+        [SwaggerResponse(500, "Erro ao gerar comparação")]
+        public async Task<IActionResult> CompareRecommendations(int id)
+        {
+            try
+            {
+                // Verificar se o paciente existe
+                var paciente = await _pacienteRepository.GetById(id);
+                if (paciente == null)
+                {
+                    return NotFound($"Paciente com ID {id} não encontrado");
+                }
+
+                // Obter recomendações usando ambas abordagens
+                var mlPrediction = await _mlService.PredictRecommendationForPatient(id);
+                var aiPrediction = await _mlService.GenerateAIRecommendationForPatient(id);
+
+                return Ok(new
+                {
+                    paciente = new
+                    {
+                        id = paciente.IdPaciente,
+                        nome = paciente.NmPaciente
+                    },
+                    periodoAnalise = $"Últimos {mlPrediction.TotalCheckInsAnalyzed} check-ins (até 5 dias)",
+                    dataUltimoCheckIn = mlPrediction.CheckInDate,
+                    machine_learning = new
+                    {
+                        recomendacao = mlPrediction.Recommendation,
+                        potencialProblema = mlPrediction.PotentialIssue,
+                        confianca = mlPrediction.Confidence
+                    },
+                    inteligencia_artificial = new
+                    {
+                        recomendacao = aiPrediction.Recommendation,
+                        potencialProblema = aiPrediction.PotentialIssue,
+                        confianca = aiPrediction.Confidence
+                    },
+                    checkInsAnalisados = mlPrediction.TotalCheckInsAnalyzed
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Erro ao comparar recomendações: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Compara recomendações de ML e IA generativa para um paciente
+        /// </summary>
+        [HttpGet("compare-recommendations/paciente/cpf/{cpf}")]
+        [SwaggerOperation(
+            Summary = "Comparar recomendações ML vs IA",
+            Description = "Compara recomendações geradas por Machine Learning e IA Generativa")]
+        [SwaggerResponse(200, "Comparação gerada com sucesso")]
+        [SwaggerResponse(404, "Paciente não encontrado")]
+        [SwaggerResponse(500, "Erro ao gerar comparação")]
+        public async Task<IActionResult> CompareRecommendationsByCPF(string cpf)
+        {
+            try
+            {
+                // Verificar se o paciente existe
+                var paciente = await _pacienteRepository.GetByNrCpf(cpf);
+                if (paciente == null)
+                {
+                    return NotFound($"Paciente com CPF {cpf} não encontrado");
+                }
+
+                // Obter recomendações usando ambas abordagens
+                var mlPrediction = await _mlService.PredictRecommendationForPatient(paciente.IdPaciente);
+                var aiPrediction = await _mlService.GenerateAIRecommendationForPatient(paciente.IdPaciente);
+
+                return Ok(new
+                {
+                    paciente = new
+                    {
+                        id = paciente.IdPaciente,
+                        nome = paciente.NmPaciente
+                    },
+                    periodoAnalise = $"Últimos {mlPrediction.TotalCheckInsAnalyzed} check-ins (até 5 dias)",
+                    dataUltimoCheckIn = mlPrediction.CheckInDate,
+                    machine_learning = new
+                    {
+                        recomendacao = mlPrediction.Recommendation,
+                        potencialProblema = mlPrediction.PotentialIssue,
+                        confianca = mlPrediction.Confidence
+                    },
+                    inteligencia_artificial = new
+                    {
+                        recomendacao = aiPrediction.Recommendation,
+                        potencialProblema = aiPrediction.PotentialIssue,
+                        confianca = aiPrediction.Confidence
+                    },
+                    checkInsAnalisados = mlPrediction.TotalCheckInsAnalyzed
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Erro ao comparar recomendações: {ex.Message}");
+            }
+        }
+        
     }
 }

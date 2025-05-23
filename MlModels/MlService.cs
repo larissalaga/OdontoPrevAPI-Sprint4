@@ -34,7 +34,7 @@ namespace OdontoPrevAPI.MlModels
             "Reduza o consumo de alimentos e bebidas açucaradas ou ácidas, como refrigerantes e sucos cítricos, para prevenir a erosão do esmalte e o desenvolvimento de cáries.",
             "Baseado em seus relatos recentes, recomendamos um exame bucal completo, incluindo radiografias, para identificar possíveis problemas em estágio inicial."
         };
-
+                
         // Dicionário para mapear histórico de pacientes para recomendações
         // Chave: ID do paciente, Valor: índice da recomendação
         private readonly Dictionary<int, int> _patientRecommendationMap;
@@ -168,9 +168,6 @@ namespace OdontoPrevAPI.MlModels
                     }
                 }
             }
-
-            Console.WriteLine($"Treinando modelo individual com {individualTrainingData.Count} check-ins");
-            TrainIndividualModel(individualTrainingData);
 
             Console.WriteLine($"Treinando modelo contextual com {contextualTrainingData.Count} conjuntos de pacientes");
             TrainContextualModel(contextualTrainingData);
@@ -429,31 +426,7 @@ namespace OdontoPrevAPI.MlModels
 
             return isOddResponse && isCriticalQuestion;
         }
-
-        /// <summary>
-        /// Treina o modelo ML para check-ins individuais (para compatibilidade)
-        /// </summary>
-        public void TrainIndividualModel(IEnumerable<CheckInData> trainingData)
-        {
-            var dataView = _mlContext.Data.LoadFromEnumerable(trainingData);
-
-            // Pipeline usando processamento de texto em vez de apenas IDs
-            var pipeline = _mlContext.Transforms.Text
-                // Converter texto da pergunta para características numéricas
-                .FeaturizeText("PerguntaFeatures", nameof(CheckInData.TextoPergunta))
-                // Converter texto da resposta para características numéricas
-                .Append(_mlContext.Transforms.Text.FeaturizeText("RespostaFeatures", nameof(CheckInData.TextoResposta)))
-                // Adicionar também características numéricas (IDs) para robustez
-                .Append(_mlContext.Transforms.Conversion.ConvertType("PerguntaIdFloat", nameof(CheckInData.PerguntaId), DataKind.Single))
-                .Append(_mlContext.Transforms.Conversion.ConvertType("RespostaIdFloat", nameof(CheckInData.RespostaId), DataKind.Single))
-                // Concatenar todas as características
-                .Append(_mlContext.Transforms.Concatenate("Features", "PerguntaFeatures", "RespostaFeatures", "PerguntaIdFloat", "RespostaIdFloat"))
-                // Treinar usando regressão logística
-                .Append(_mlContext.BinaryClassification.Trainers.LbfgsLogisticRegression());
-
-            _individualModel = pipeline.Fit(dataView);
-        }
-
+                
         /// <summary>
         /// Treina o modelo para fazer previsões contextuais baseadas em histórico de 5 dias
         /// </summary>
@@ -508,19 +481,7 @@ namespace OdontoPrevAPI.MlModels
                     minimumExampleCountPerLeaf: 10));
 
             _contextualModel = pipeline.Fit(dataView);
-        }
-
-        /// <summary>
-        /// Faz previsão usando o modelo individual treinado (para compatibilidade)
-        /// </summary>
-        public IssuePrediction PredictIndividual(CheckInData newData)
-        {
-            if (_individualModel == null)
-                throw new InvalidOperationException("Modelo individual não está treinado.");
-
-            var engine = _mlContext.Model.CreatePredictionEngine<CheckInData, IssuePrediction>(_individualModel);
-            return engine.Predict(newData);
-        }
+        }        
 
         /// <summary>
         /// Prever problemas baseado em análise contextual de check-ins recentes
@@ -798,11 +759,20 @@ namespace OdontoPrevAPI.MlModels
             };
         }
 
+        
+
         /// <summary>
-        /// Analisar dados de check-in para um paciente específico, gerando uma recomendação consolidada
+        /// Gera uma recomendação personalizada para um paciente usando IA generativa baseada nos últimos 5 dias de check-ins
         /// </summary>
-        public async Task<List<DentalAnalysisResult>> AnalyzePatientCheckIns(int pacienteId)
+        public async Task<PredictionResult> GenerateAIRecommendationForPatient(int pacienteId)
         {
+            // Buscar paciente para ter as informações básicas
+            var paciente = await _dataContext.Paciente.FindAsync(pacienteId);
+            if (paciente == null)
+            {
+                throw new ArgumentException($"Paciente com ID {pacienteId} não encontrado");
+            }
+
             // Encontrar a data de check-in mais recente do paciente
             var lastCheckIn = await _dataContext.CheckIn
                 .Where(c => c.IdPaciente == pacienteId)
@@ -811,149 +781,71 @@ namespace OdontoPrevAPI.MlModels
 
             if (lastCheckIn == null)
             {
-                return new List<DentalAnalysisResult>();
+                return new PredictionResult
+                {
+                    CheckInDate = DateTime.Now,
+                    Question = "Nenhum check-in encontrado",
+                    Answer = "Nenhuma resposta registrada",
+                    PotentialIssue = false,
+                    Confidence = 0.0f,
+                    Recommendation = "Recomendamos agendar sua primeira consulta odontológica para avaliação inicial.",
+                    PatientName = paciente.NmPaciente,
+                    PatientId = pacienteId,
+                    TotalCheckInsAnalyzed = 0
+                };
             }
 
-            // Obter check-ins dos últimos 5 dias com base no check-in mais recente
+            // Obter check-ins dos últimos 5 dias
             var recentCheckIns = await _dataContext.CheckIn
                 .Include(c => c.Perguntas)
                 .Include(c => c.Respostas)
-                .Where(c => c.IdPaciente == pacienteId &&
-                       (lastCheckIn.DtCheckIn - c.DtCheckIn).TotalDays <= 5)
+                .Where(c => c.IdPaciente == pacienteId && c.DtCheckIn >= lastCheckIn.DtCheckIn.AddDays(-5))
                 .OrderByDescending(c => c.DtCheckIn)
                 .ToListAsync();
 
             if (recentCheckIns.Count == 0)
             {
-                return new List<DentalAnalysisResult>();
+                return new PredictionResult
+                {
+                    CheckInDate = lastCheckIn.DtCheckIn,
+                    Question = "Nenhum check-in recente",
+                    Answer = "Nenhuma resposta recente",
+                    PotentialIssue = false,
+                    Confidence = 0.0f,
+                    Recommendation = "Continue mantendo sua saúde bucal com escovação regular e visitas ao dentista.",
+                    PatientName = paciente.NmPaciente,
+                    PatientId = pacienteId,
+                    TotalCheckInsAnalyzed = 0
+                };
             }
 
-            // Analisar o paciente para obter uma recomendação consolidada
-            AnalyzePatientHistoryAndCreateRecommendation(pacienteId, recentCheckIns);
+            // Determinar possíveis problemas usando o método existente (para manter consistência)
+            bool hasPotentialIssue = recentCheckIns.Any(c => DetermineIfPotentialIssue(c, recentCheckIns));
 
-            // Obter a recomendação consolidada
-            string consolidatedRecommendation = await GetPatientRecommendationAsync(pacienteId);
-
-            // Análise contextual para toda a janela de 5 dias
-            var contextualData = new ContextualCheckInData
-            {
-                PacienteId = pacienteId,
-                CheckInCount = recentCheckIns.Count,
-                ConsolidatedQuestions = string.Join(" | ", recentCheckIns
-                    .Where(c => c.Perguntas != null)
-                    .Select(c => c.Perguntas.DsPergunta)),
-                ConsolidatedAnswers = string.Join(" | ", recentCheckIns
-                    .Where(c => c.Respostas != null)
-                    .Select(c => c.Respostas.DsResposta)),
-                ContainsPainTopic = recentCheckIns.Any(c =>
-                    c.Perguntas?.DsPergunta.ToLower().Contains("dor") == true),
-                ContainsBleedingTopic = recentCheckIns.Any(c =>
-                    c.Perguntas?.DsPergunta.ToLower().Contains("gengiva") == true)
-            };
-
-            // Determinar se há problemas usando modelo contextual (ou regras como fallback)
-            bool hasContextualIssue = false;
-            float contextualConfidence = 0.5f;
-
+            // Obter recomendação personalizada da IA generativa
+            string aiRecommendation;
             try
             {
-                if (_contextualModel != null)
-                {
-                    var prediction = PredictFromContext(contextualData);
-                    hasContextualIssue = prediction.PredictedIssue;
-                    contextualConfidence = prediction.Probability;
-                }
-                else
-                {
-                    hasContextualIssue = recentCheckIns.Any(c => DetermineIfPotentialIssue(c, recentCheckIns));
-                }
+                aiRecommendation = await _generativeAI.GenerateDentalRecommendation(recentCheckIns);
             }
-            catch
+            catch (Exception ex)
             {
-                hasContextualIssue = recentCheckIns.Any(c => DetermineIfPotentialIssue(c, recentCheckIns));
+                Console.WriteLine($"Erro na geração de recomendação por IA: {ex.Message}. Usando recomendação padrão.");
+                aiRecommendation = "Recomendamos agendar uma consulta para avaliação profissional com base no seu histórico recente.";
             }
 
-            var results = new List<DentalAnalysisResult>();
-
-            // Adicionar uma entrada contextual resumindo os 5 dias
-            results.Add(new DentalAnalysisResult
+            // Montar o resultado usando dados consolidados
+            return new PredictionResult
             {
                 CheckInDate = lastCheckIn.DtCheckIn,
-                Question = $"Análise contextual dos últimos {recentCheckIns.Count} check-ins",
-                Answer = "Resumo de todas as respostas do período",
-                PotentialIssue = hasContextualIssue,
-                Confidence = contextualConfidence,
-                Recommendation = consolidatedRecommendation
-            });
-
-            // Também adicionar cada check-in individual para detalhamento
-            foreach (var checkIn in recentCheckIns)
-            {
-                if (checkIn.Perguntas != null && checkIn.Respostas != null)
-                {
-                    // Sempre usar a mesma recomendação consolidada para todo o período
-                    results.Add(new DentalAnalysisResult
-                    {
-                        CheckInDate = checkIn.DtCheckIn,
-                        Question = checkIn.Perguntas.DsPergunta,
-                        Answer = checkIn.Respostas.DsResposta,
-                        PotentialIssue = DetermineIfPotentialIssue(checkIn, recentCheckIns),
-                        Confidence = hasContextualIssue ? contextualConfidence : 0.5f,
-                        Recommendation = consolidatedRecommendation
-                    });
-                }
-            }
-
-            return results;
-        }
-
-        /// <summary>
-        /// Obter uma análise consolidada da saúde bucal de um paciente
-        /// </summary>
-        public async Task<PatientDentalSummary> GetPatientDentalSummary(int pacienteId)
-        {
-            // Buscar informações do paciente
-            var paciente = await _dataContext.Paciente.FindAsync(pacienteId);
-            if (paciente == null)
-            {
-                return new PatientDentalSummary
-                {
-                    PacienteId = pacienteId,
-                    Nome = "Paciente não encontrado",
-                    RecomendacaoPrincipal = "Não há dados suficientes para análise."
-                };
-            }
-
-            // Obter análises detalhadas
-            var analysisResults = await AnalyzePatientCheckIns(pacienteId);
-
-            if (analysisResults.Count == 0)
-            {
-                return new PatientDentalSummary
-                {
-                    PacienteId = pacienteId,
-                    Nome = paciente.NmPaciente,
-                    RecomendacaoPrincipal = "Não há check-ins recentes para análise."
-                };
-            }
-
-            // Calcular estatísticas
-            int totalIssues = analysisResults.Count(r => r.PotentialIssue);
-            float averageConfidence = analysisResults.Average(r => r.Confidence);
-
-            // Obter recomendação consolidada
-            string consolidatedRecommendation = await GetPatientRecommendationAsync(pacienteId);
-
-            return new PatientDentalSummary
-            {
-                PacienteId = pacienteId,
-                Nome = paciente.NmPaciente,
-                TotalCheckIns = analysisResults.Count - 1, // -1 para remover a entrada contextual
-                ProblemasIdentificados = totalIssues,
-                ConfiancaMedia = averageConfidence,
-                RecomendacaoPrincipal = consolidatedRecommendation,
-                UltimoCheckIn = analysisResults.Skip(1).First().CheckInDate, // Pular a entrada contextual
-                DetalhesAnalise = analysisResults
+                Question = "Análise de IA dos últimos 5 dias de check-ins",
+                Answer = $"Analisados {recentCheckIns.Count} check-ins recentes com Inteligência Artificial",
+                PotentialIssue = hasPotentialIssue,
+                Confidence = hasPotentialIssue ? 0.85f : 0.15f, // Confiança arbitrária para IA generativa
+                Recommendation = aiRecommendation,
+                PatientName = paciente.NmPaciente,
+                PatientId = pacienteId,
+                TotalCheckInsAnalyzed = recentCheckIns.Count
             };
         }
     }
