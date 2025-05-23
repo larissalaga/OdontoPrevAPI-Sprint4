@@ -1,9 +1,14 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.13.35913.81 d17.13
+VisualStudioVersion = 17.13.35913.81
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OdontoPrevAPI", "OdontoPrevAPI.csproj", "{8545624E-CCA0-4A6B-8B86-B217D9AD22F4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OdontoPrevAPl.Tests", "..\OdontoPrevAPl.Tests\OdontoPrevAPl.Tests.csproj", "{12193B4D-FA0E-4ADF-A679-A9199326BAAE}"
+	ProjectSection(ProjectDependencies) = postProject
+		{8545624E-CCA0-4A6B-8B86-B217D9AD22F4} = {8545624E-CCA0-4A6B-8B86-B217D9AD22F4}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +20,10 @@ Global
 		{8545624E-CCA0-4A6B-8B86-B217D9AD22F4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8545624E-CCA0-4A6B-8B86-B217D9AD22F4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8545624E-CCA0-4A6B-8B86-B217D9AD22F4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{12193B4D-FA0E-4ADF-A679-A9199326BAAE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{12193B4D-FA0E-4ADF-A679-A9199326BAAE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{12193B4D-FA0E-4ADF-A679-A9199326BAAE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{12193B4D-FA0E-4ADF-A679-A9199326BAAE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

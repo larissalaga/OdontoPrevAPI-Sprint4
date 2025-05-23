@@ -1,138 +1,221 @@
-# OdontoPrevAPI
+ï»¿# OdontoPrevAPI
 
-## O que é o OdontoPrevAPI?
+## O que Ã© o OdontoPrevAPI?
 
-OdontoPrevAPI é uma API para gerenciamento de saúde bucal preventiva que utiliza técnicas avançadas de Machine Learning e Inteligência Artificial para oferecer recomendações personalizadas aos pacientes com base em seus históricos de check-ins odontológicos.
+OdontoPrevAPI Ã© uma API para gerenciamento de saÃºde bucal preventiva que utiliza tÃ©cnicas avanÃ§adas de Machine Learning e InteligÃªncia Artificial para oferecer recomendaÃ§Ãµes personalizadas aos pacientes com base em seus histÃ³ricos de check-ins odontolÃ³gicos.
 
-A plataforma permite o registro de relacionamento entre Pacientes e Dentistas, e o registro de um diário de saúde bucal, ao responder Check Ins diários.
+A plataforma permite o registro de relacionamento entre Pacientes e Dentistas, e o registro de um diÃ¡rio de saÃºde bucal, ao responder Check Ins diÃ¡rios.
 
-O sistema permite analisar os dados de check-ins dos pacientes nos últimos 5 dias e utiliza tanto modelos de Machine Learning tradicionais quanto Inteligência Artificial generativa para detectar potenciais problemas bucais e fornecer recomendações adequadas ao contexto do paciente.
+O sistema permite analisar os dados de check-ins dos pacientes nos Ãºltimos 5 dias e utiliza tanto modelos de Machine Learning tradicionais quanto InteligÃªncia Artificial generativa para detectar potenciais problemas bucais e fornecer recomendaÃ§Ãµes adequadas ao contexto do paciente.
 
-## Características Principais
+## CaracterÃ­sticas Principais
 
-- Registro de Pacientes e Dentistas: Permite o gerenciamento de informações de pacientes e dentistas.
-- Check-Ins Diários: Os pacientes podem registrar suas condições bucais diariamente, respondendo a perguntas sobre dor, sangramento, sensibilidade e bruxismo.
-- Análise Contextual: Processamento do histórico recente de check-ins do paciente
+- Registro de Pacientes e Dentistas: Permite o gerenciamento de informaÃ§Ãµes de pacientes e dentistas.
+- Check-Ins DiÃ¡rios: Os pacientes podem registrar suas condiÃ§Ãµes bucais diariamente, respondendo a perguntas sobre dor, sangramento, sensibilidade e bruxismo.
+- AnÃ¡lise Contextual: Processamento do histÃ³rico recente de check-ins do paciente
 - Dupla Abordagem de IA:
-  - ML.NET: Modelo de Machine Learning para detectar padrões e problemas
-  - Azure OpenAI: IA generativa para recomendações personalizadas em linguagem natural
-- Comparação de Abordagens: Possibilidade de comparar recomendações dos modelos de ML e IA generativa
+  - ML.NET: Modelo de Machine Learning para detectar padrÃµes e problemas
+  - Azure OpenAI: IA generativa para recomendaÃ§Ãµes personalizadas em linguagem natural
+- ComparaÃ§Ã£o de Abordagens: Possibilidade de comparar recomendaÃ§Ãµes dos modelos de ML e IA generativa
 
-## Integração com Google Accounts
+## IntegraÃ§Ã£o com Google Accounts
 
-O sistema implementa autenticação segura utilizando contas Google para controle de acesso:
+O sistema implementa autenticaÃ§Ã£o segura utilizando contas Google para controle de acesso:
 
-### 1. Autenticação OAuth 2.0:
-- Integração nativa com o protocolo OAuth 2.0 do Google
-- Configuração via ASP.NET Core Authentication Middleware
-- Gerenciamento seguro de credenciais através de variáveis de ambiente
+### 1. AutenticaÃ§Ã£o OAuth 2.0:
+- IntegraÃ§Ã£o nativa com o protocolo OAuth 2.0 do Google
+- ConfiguraÃ§Ã£o via ASP.NET Core Authentication Middleware
+- Gerenciamento seguro de credenciais atravÃ©s de variÃ¡veis de ambiente
 
-### 2. Proteção de Endpoints:
+### 2. ProteÃ§Ã£o de Endpoints:
 - Interface Swagger protegida com login Google
-- Middleware personalizado para roteamento de requisições autenticadas
-- Forçamento de seleção de conta a cada acesso com parâmetro prompt=select_account
+- Middleware personalizado para roteamento de requisiÃ§Ãµes autenticadas
+- ForÃ§amento de seleÃ§Ã£o de conta a cada acesso com parÃ¢metro prompt=select_account
 
-### 3. APIs RESTful para Gerenciamento de Sessão:
-- Endpoint /api/account/logout para encerramento seguro de sessão
-- Preservação de estado através de cookies de autenticação
-- Separação clara entre autenticação e lógica de negócio
+### 3. APIs RESTful para Gerenciamento de SessÃ£o:
+- Endpoint /api/account/logout para encerramento seguro de sessÃ£o
+- PreservaÃ§Ã£o de estado atravÃ©s de cookies de autenticaÃ§Ã£o
+- SeparaÃ§Ã£o clara entre autenticaÃ§Ã£o e lÃ³gica de negÃ³cio
 
-### 4. Fluxo de Autenticação:
-- Redirecionamento automático para tela de login Google
-- Tratamento de tokens e credenciais em conformidade com padrões de segurança
-- Injeção de JavaScript personalizado na interface Swagger após autenticação
+### 4. Fluxo de AutenticaÃ§Ã£o:
+- Redirecionamento automÃ¡tico para tela de login Google
+- Tratamento de tokens e credenciais em conformidade com padrÃµes de seguranÃ§a
+- InjeÃ§Ã£o de JavaScript personalizado na interface Swagger apÃ³s autenticaÃ§Ã£o
 
-Esta integração assegura que apenas usuários autorizados possam acessar a API e suas funcionalidades sensíveis, mantendo o padrão RESTful para todas as operações de autenticação.
+Esta integraÃ§Ã£o assegura que apenas usuÃ¡rios autorizados possam acessar a API e suas funcionalidades sensÃ­veis, mantendo o padrÃ£o RESTful para todas as operaÃ§Ãµes de autenticaÃ§Ã£o.
 
-## Práticas Clean Code e SOLID
+## PrÃ¡ticas Clean Code e SOLID
 
 ### Clean Code
 
-O projeto implementa os seguintes princípios de Clean Code:
+O projeto implementa os seguintes princÃ­pios de Clean Code:
 
 #### 1. Nomenclatura Clara e Descritiva
 - Classes como MlService, ContextualCheckInData, e PredictionResult
-- Métodos que expressam claramente seu propósito: TrainModelFromDatabase, PredictRecommendationForPatient
+- MÃ©todos que expressam claramente seu propÃ³sito: TrainModelFromDatabase, PredictRecommendationForPatient
 
-#### 2. Documentação Completa
-- Comentários XML descrevendo o propósito de métodos e classes
-- Anotações Swagger para documentação da API
+#### 2. DocumentaÃ§Ã£o Completa
+- ComentÃ¡rios XML descrevendo o propÃ³sito de mÃ©todos e classes
+- AnotaÃ§Ãµes Swagger para documentaÃ§Ã£o da API
 
 #### 3. Tratamento de Erros Consistente
 - Blocos try-catch com mensagens de erro detalhadas
-- Retorno de códigos HTTP apropriados em cada situação
+- Retorno de cÃ³digos HTTP apropriados em cada situaÃ§Ã£o
 
 ### SOLID
 
-#### 1. Princípio da Responsabilidade Única
-- MlService focado em operações de Machine Learning
-- Controllers que gerenciam apenas requisições HTTP
-- Acesso a dados isolado em interfaces de repositório
+#### 1. PrincÃ­pio da Responsabilidade Ãšnica
+- MlService focado em operaÃ§Ãµes de Machine Learning
+- Controllers que gerenciam apenas requisiÃ§Ãµes HTTP
+- Acesso a dados isolado em interfaces de repositÃ³rio
 
-#### 2. Princípio Aberto/Fechado
-- Pipeline de ML extensível através de configuração
+#### 2. PrincÃ­pio Aberto/Fechado
+- Pipeline de ML extensÃ­vel atravÃ©s de configuraÃ§Ã£o
 
-#### 3. Princípio da Inversão de Dependência
-- Uso intenso de injeção de dependência via construtor
-- Controllers dependem de abstrações (interfaces) e não implementações
-- MlController recebe repositórios e serviços como dependências
+#### 3. PrincÃ­pio da InversÃ£o de DependÃªncia
+- Uso intenso de injeÃ§Ã£o de dependÃªncia via construtor
+- Controllers dependem de abstraÃ§Ãµes (interfaces) e nÃ£o implementaÃ§Ãµes
+- MlController recebe repositÃ³rios e serviÃ§os como dependÃªncias
 
-#### 4. Princípio da Segregação de Interface
-- Interfaces de repositório (ICheckInRepository, IPacienteRepository) focadas e específicas
+#### 4. PrincÃ­pio da SegregaÃ§Ã£o de Interface
+- Interfaces de repositÃ³rio (ICheckInRepository, IPacienteRepository) focadas e especÃ­ficas
 
-## Ferramentas de Inteligência Artificial
+## Ferramentas de InteligÃªncia Artificial
 
-### Integração com ML.NET
+### IntegraÃ§Ã£o com ML.NET
 
-A API utiliza o framework ML.NET para processamento e análise dos dados de check-in odontológicos:
+A API utiliza o framework ML.NET para processamento e anÃ¡lise dos dados de check-in odontolÃ³gicos:
 
 #### 1. Treinamento de Modelos:
-- Método TrainModelFromDatabase() processa check-ins dos últimos 5 dias
-- Agrupamento de dados por paciente para análise contextual
+- MÃ©todo TrainModelFromDatabase() processa check-ins dos Ãºltimos 5 dias
+- Agrupamento de dados por paciente para anÃ¡lise contextual
 
 #### 2. Processamento Contextual:
-- Classe ContextualCheckInData consolida o histórico de um paciente
-- Análise de tópicos relevantes (dor, sangramento, sensibilidade, bruxismo)
+- Classe ContextualCheckInData consolida o histÃ³rico de um paciente
+- AnÃ¡lise de tÃ³picos relevantes (dor, sangramento, sensibilidade, bruxismo)
 
 #### 3. Pipeline de Machine Learning:
 - Processamento de texto com FeaturizeText para perguntas e respostas
-- Conversão de características booleanas e numéricas
-- Algoritmo FastTree para classificação binária
+- ConversÃ£o de caracterÃ­sticas booleanas e numÃ©ricas
+- Algoritmo FastTree para classificaÃ§Ã£o binÃ¡ria
 
-#### 4. Previsões Baseadas em Regras e ML:
-- Método DetermineIfPotentialIssue() implementa regras específicas de domínio
-- Modelo contextual para análise de padrões mais complexos
+#### 4. PrevisÃµes Baseadas em Regras e ML:
+- MÃ©todo DetermineIfPotentialIssue() implementa regras especÃ­ficas de domÃ­nio
+- Modelo contextual para anÃ¡lise de padrÃµes mais complexos
+#### 5. Dados de treinamento e teste:
+- Os dados usados para treinamento do modelo sÃ£o gerados aleatoriamente, com 30% dos dados reservados para teste. Esses dados estÃ£o no arquivo SQL Packages/ML/DadosTeste.sql
+- Os dados de teste se encontram em SQL Packages/ML/DadosTeste.sql, e sÃ£o gerados aleatoriamente
 
-### Integração com Azure OpenAI
+### IntegraÃ§Ã£o com Azure OpenAI
 
-A API integra o Azure OpenAI para geração de recomendações mais naturais e contextuais:
+A API integra o Azure OpenAI para geraÃ§Ã£o de recomendaÃ§Ãµes mais naturais e contextuais:
 
-#### 1. Serviço Generativo:
-- Classe GenerativeAIService encapsula a comunicação com a API do Azure OpenAI
-- Configuração do modelo via injeção de dependência
+#### 1. ServiÃ§o Generativo:
+- Classe GenerativeAIService encapsula a comunicaÃ§Ã£o com a API do Azure OpenAI
+- ConfiguraÃ§Ã£o do modelo via injeÃ§Ã£o de dependÃªncia
 
-#### 2. Geração de Recomendações Personalizadas:
-- Método GenerateDentalRecommendation() envia histórico de check-ins para análise da IA
-- Formatação de prompts detalhados incluindo datas e evolução do caso
+#### 2. GeraÃ§Ã£o de RecomendaÃ§Ãµes Personalizadas:
+- MÃ©todo GenerateDentalRecommendation() envia histÃ³rico de check-ins para anÃ¡lise da IA
+- FormataÃ§Ã£o de prompts detalhados incluindo datas e evoluÃ§Ã£o do caso
 
-#### 3. Comparação com Modelos Tradicionais:
-- API permite comparar recomendações do ML tradicional vs IA generativa
-- Diferentes níveis de confiança para cada método
+#### 3. ComparaÃ§Ã£o com Modelos Tradicionais:
+- API permite comparar recomendaÃ§Ãµes do ML tradicional vs IA generativa
+- Diferentes nÃ­veis de confianÃ§a para cada mÃ©todo
 
 #### 4. Fallback Inteligente:
-- Sistema cai para recomendações pré-definidas em caso de falha na API
+- Sistema cai para recomendaÃ§Ãµes prÃ©-definidas em caso de falha na API
 
 ## Arquitetura
 
-O projeto segue um padrão de arquitetura em camadas:
+O projeto segue um padrÃ£o de arquitetura em camadas:
 
-1. Controllers: Gerenciamento de requisições HTTP
-2. Services: Lógica de negócio e integração com IA
+1. Controllers: Gerenciamento de requisiÃ§Ãµes HTTP
+2. Services: LÃ³gica de negÃ³cio e integraÃ§Ã£o com IA
 3. Repositories: Acesso a dados
-4. Models: Entidades de domínio e DTOs
+4. Models: Entidades de domÃ­nio e DTOs
 
-Esta arquitetura limpa permite a evolução dos modelos de ML e IA sem afetar a estrutura geral da aplicação.
+Esta arquitetura limpa permite a evoluÃ§Ã£o dos modelos de ML e IA sem afetar a estrutura geral da aplicaÃ§Ã£o.
 
-## Contribuições
+## Testes Automatizados
 
-Este projeto demonstra a aplicação de práticas modernas de desenvolvimento com foco em IA e ML para o domínio da saúde bucal, oferecendo uma abordagem híbrida que combina o poder preditivo do ML.NET com a capacidade generativa do Azure OpenAI.
+O projeto OdontoPrevAPI implementa uma suÃ­te completa de testes automatizados para garantir a qualidade e confiabilidade do cÃ³digo. A estratÃ©gia de testes segue as melhores prÃ¡ticas de desenvolvimento de software, com cobertura em mÃºltiplos nÃ­veis.
+
+### Estrutura e OrganizaÃ§Ã£o
+
+O projeto de testes estÃ¡ organizado em uma estrutura clara que separa diferentes tipos de testes:
+
+OdontoPrevAPl.Tests/
+â”œâ”€â”€ UnitTests/
+â”‚   â”œâ”€â”€ Controllers/     # Testes para os controladores da API
+â”‚   â”œâ”€â”€ Repositories/    # Testes para as classes de acesso a dados
+â”‚   â”œâ”€â”€ Services/        # Testes para serviÃ§os de aplicaÃ§Ã£o
+â”‚   â””â”€â”€ Models/          # Testes para modelos e entidades
+â”œâ”€â”€ IntegrationTests/    # Testes que verificam a integraÃ§Ã£o entre componentes
+â”‚   â”œâ”€â”€ Controllers/     # Testes para os controladores da API
+â”‚   â”œâ”€â”€ Repositories/    # Testes para as classes de acesso a dados
+â””â”€â”€ SystemTests/         # Testes end-to-end que simulam usuÃ¡rios reais
+
+### Ferramentas Utilizadas
+
+A implementaÃ§Ã£o de testes utiliza um conjunto moderno de ferramentas:
+
+- xUnit: Framework principal de testes, escolhido por sua simplicidade e extensibilidade
+- FluentAssertions: Biblioteca que permite asserÃ§Ãµes mais expressivas e legÃ­veis
+- Moq: Framework de mocking para isolar componentes em testes unitÃ¡rios
+- EntityFrameworkCore.InMemory: Permite testar repositÃ³rios sem dependÃªncia de um banco de dados real
+- Microsoft.AspNetCore.Mvc.Testing: Facilita testes de integraÃ§Ã£o com a API web completa
+- Microsoft.AspNetCore.TestHost: Hospeda a aplicaÃ§Ã£o durante os testes de integraÃ§Ã£o
+
+### Tipos de Testes
+
+#### 1. Testes UnitÃ¡rios
+
+Os testes unitÃ¡rios focam em componentes individuais, isolando-os de suas dependÃªncias:
+
+- Testes de RepositÃ³rios: Verificam se os mÃ©todos de acesso a dados funcionam corretamente
+  - Exemplo: CheckInRepositoryTests, PerguntasRepositoryTests, RespostasRepositoryTests
+- Testes de Controllers: Validam o comportamento dos endpoints da API
+- Testes de ServiÃ§os: Asseguram que a lÃ³gica de negÃ³cio funciona conforme esperado
+
+#### 2. Testes de IntegraÃ§Ã£o
+
+Os testes de integraÃ§Ã£o verificam como diferentes componentes do sistema interagem:
+
+- IntegraÃ§Ã£o entre Controladores e RepositÃ³rios: Validam fluxos de dados completos
+- Testes de Middleware: Garantem que componentes como autenticaÃ§Ã£o funcionam corretamente
+- IntegraÃ§Ãµes com ML.NET: Verificam se os modelos de machine learning funcionam conforme esperado
+
+#### 3. Testes de Sistema (End-to-End)
+
+Esses testes simulam interaÃ§Ãµes reais de usuÃ¡rios com a API:
+
+- Ciclos Completos: Testes que percorrem fluxos de uso completo da API
+- SimulaÃ§Ãµes de Cliente HTTP: Verificam se os endpoints funcionam corretamente de ponta a ponta
+
+### EstratÃ©gia para DependÃªncias Externas
+
+O projeto implementa uma abordagem robusta para lidar com dependÃªncias externas:
+
+- Banco de Dados: Utiliza banco de dados em memÃ³ria para testes, evitando dependÃªncia de Oracle
+- Procedimentos Armazenados: Mock de chamadas SQL para simular procedimentos Oracle
+- APIs Externas: Mock de serviÃ§os externos como Azure OpenAI
+
+### BenefÃ­cios dos Testes Automatizados
+
+- Maior ConfianÃ§a no CÃ³digo: DetecÃ§Ã£o precoce de regressÃµes ou falhas
+- Facilita RefatoraÃ§Ãµes: SeguranÃ§a para melhorar o cÃ³digo sem quebrar funcionalidades
+- DocumentaÃ§Ã£o Viva: Os testes servem como exemplos prÃ¡ticos de uso dos componentes
+- Desenvolvimento Guiado por Testes: Possibilita a implementaÃ§Ã£o de TDD (Test-Driven Development)
+
+### ExecuÃ§Ã£o dos Testes
+
+Os testes podem ser executados atravÃ©s:
+- Do Visual Studio Test Explorer
+- Linha de comando com "dotnet test"
+- IntegraÃ§Ã£o contÃ­nua em pipelines de CI/CD
+
+Esta abordagem abrangente de testes automatizados garante que a OdontoPrevAPI mantenha alta qualidade Ã  medida que evolui, especialmente considerando os componentes avanÃ§ados de ML e IA que requerem testes rigorosos.
+
+## ContribuiÃ§Ãµes
+
+Este projeto demonstra a aplicaÃ§Ã£o de prÃ¡ticas modernas de desenvolvimento com foco em IA e ML para o domÃ­nio da saÃºde bucal, oferecendo uma abordagem hÃ­brida que combina o poder preditivo do ML.NET com a capacidade generativa do Azure OpenAI.
