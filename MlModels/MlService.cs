@@ -15,8 +15,7 @@ namespace OdontoPrevAPI.MlModels
     {
         private readonly MLContext _mlContext;
         private readonly DataContext _dataContext;
-        private readonly GenerativeAIService _generativeAI;
-        private ITransformer? _individualModel;  // Para casos individuais (legado)
+        private readonly GenerativeAIService _generativeAI;        
         private ITransformer? _contextualModel;  // NOVO: Modelo específico para análise contextual
         private readonly Dictionary<int, string> _cachedRecommendations;
 

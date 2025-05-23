@@ -12,7 +12,7 @@ namespace OdontoPrevAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class MlController : ControllerBase
+    public class MLController : ControllerBase
     {
         private readonly MlService _mlService;
         private readonly ICheckInRepository _checkInRepository;
@@ -20,7 +20,7 @@ namespace OdontoPrevAPI.Controllers
         private readonly IPerguntasRepository _perguntasRepository;
         private readonly IRespostasRepository _respostasRepository;
 
-        public MlController(
+        public MLController(
             MlService mlService,
             ICheckInRepository checkInRepository,
             IPacienteRepository pacienteRepository,
